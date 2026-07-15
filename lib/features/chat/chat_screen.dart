@@ -677,11 +677,6 @@ class _ChatScreenState extends State<ChatScreen> {
     if (userPrompt.trim().isEmpty || assistantResponse.trim().isEmpty) {
       return;
     }
-    final bookkeeperModel =
-        _modelController.findById(
-          _modelController.settings.bookkeeperModelId,
-        ) ??
-        _modelController.findById(_modelController.settings.mainModelId);
     final bookkeeperCloudModel =
         _modelController.findCloudBySelectionId(
           _modelController.settings.bookkeeperModelId,
@@ -689,13 +684,7 @@ class _ChatScreenState extends State<ChatScreen> {
         _modelController.findCloudBySelectionId(
           _modelController.settings.mainModelId,
         );
-    if (bookkeeperModel == null && bookkeeperCloudModel == null) {
-      return;
-    }
-    if (bookkeeperCloudModel != null && !bookkeeperCloudModel.verified) {
-      return;
-    }
-    if (bookkeeperCloudModel == null && !_runtimeController.status.isReady) {
+    if (bookkeeperCloudModel == null || !bookkeeperCloudModel.verified) {
       return;
     }
 
@@ -711,27 +700,14 @@ class _ChatScreenState extends State<ChatScreen> {
         currentRollingSummary: _rollingSummaryLines,
         currentColdLogExcerpt: _coldLogExcerptLines,
       );
-      final response = bookkeeperCloudModel != null
-          ? await _inferenceController.cloudService.generateWithRetry(
-              model: bookkeeperCloudModel,
-              prompt: bookkeeperPrompt,
-              maxTokens: preset.maxTokens,
-              temperature: preset.temperature,
-              onChunk: (_) {},
-            )
-          : await _runBackgroundGeneration(
-              request: GenerationRequest(
-                prompt: bookkeeperPrompt,
-                modelPath: bookkeeperModel!.fullPath,
-                contextSize: preset.contextSize,
-                maxTokens: preset.maxTokens,
-                temperature: preset.temperature,
-                topP: preset.topP,
-                topK: preset.topK,
-                gpuLayers: preset.gpuLayers,
-              ),
-            );
-      if (response == null || response.trim().isEmpty) {
+      final response = await _inferenceController.cloudService.generateWithRetry(
+        model: bookkeeperCloudModel,
+        prompt: bookkeeperPrompt,
+        maxTokens: preset.maxTokens,
+        temperature: preset.temperature,
+        onChunk: (_) {},
+      );
+      if (response.trim().isEmpty) {
         return;
       }
 
@@ -824,57 +800,6 @@ class _ChatScreenState extends State<ChatScreen> {
     await _storage.appendMemoryFile('cold_log.md', '\n$coldLogLine\n');
     await _memoryController.refresh();
     await _refreshMemoryBumps();
-  }
-
-  Future<String?> _runBackgroundGeneration({
-    required GenerationRequest request,
-  }) async {
-    final completer = Completer<String?>();
-    final earlyEvents = <GenerationEvent>[];
-    String? requestId;
-    late final StreamSubscription<Map<Object?, Object?>> subscription;
-
-    void processEvent(GenerationEvent event) {
-      if (requestId == null) {
-        earlyEvents.add(event);
-        return;
-      }
-      if (event.requestId != requestId || completer.isCompleted) {
-        return;
-      }
-      switch (event.type) {
-        case 'completed':
-          completer.complete(event.text ?? '');
-        case 'failed':
-          completer.complete(null);
-        case 'cancelled':
-          completer.complete(null);
-      }
-    }
-
-    subscription = _inferenceController.service.generationEvents().listen((
-      rawEvent,
-    ) {
-      processEvent(GenerationEvent.fromMap(rawEvent));
-    });
-
-    try {
-      final result = await _inferenceController.service.startGeneration(
-        request,
-      );
-      requestId = result['requestId'] as String?;
-      if ((result['state'] as String?) == 'failed' || requestId == null) {
-        return null;
-      }
-      for (final event in earlyEvents) {
-        processEvent(event);
-      }
-      return await completer.future.timeout(const Duration(seconds: 45));
-    } catch (_) {
-      return null;
-    } finally {
-      await subscription.cancel();
-    }
   }
 
   String _compactSingleLine(String input, {required int maxLength}) {

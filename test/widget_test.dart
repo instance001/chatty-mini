@@ -133,6 +133,41 @@ void main() {
     expect(controller.status.currentRequestId, isNull);
     expect(controller.status.completedResponse, 'Quick reply');
   });
+
+  test('failed local start clears generating state', () async {
+    final service = _FailedStartInferenceService();
+    final controller = InferenceController(service: service);
+    addTearDown(controller.dispose);
+
+    await controller.initialize();
+    await controller.loadModelWithSettings(
+      modelPath: 'C:/models/test.gguf',
+      contextSize: 1536,
+      gpuLayers: 0,
+    );
+
+    await controller.startGeneration(
+      request: const GenerationRequest(
+        prompt: 'Hello again',
+        modelPath: 'C:/models/test.gguf',
+        contextSize: 1536,
+        maxTokens: 96,
+        temperature: 0.7,
+        topP: 0.9,
+        topK: 40,
+        gpuLayers: 0,
+      ),
+    );
+
+    expect(controller.status.state, 'failed');
+    expect(controller.status.isGenerating, isFalse);
+    expect(controller.status.currentRequestId, isNull);
+    expect(controller.status.assistantDraft, isEmpty);
+    expect(
+      controller.status.error,
+      'Another local generation is already running.',
+    );
+  });
 }
 
 class _TestSandboxController extends SandboxController {
@@ -193,4 +228,27 @@ class _FastCompletionInferenceService extends InferenceService {
 
   @override
   Future<void> cancelGeneration({required String requestId}) async {}
+}
+
+class _FailedStartInferenceService extends InferenceService {
+  @override
+  Stream<Map<Object?, Object?>> generationEvents() => const Stream.empty();
+
+  @override
+  Future<Map<Object?, Object?>> loadModel({
+    required String modelPath,
+    required int contextSize,
+    required int gpuLayers,
+  }) async => {
+    'state': 'loaded',
+    'message': 'Loaded',
+  };
+
+  @override
+  Future<Map<Object?, Object?>> startGeneration(
+    GenerationRequest request,
+  ) async => {
+    'state': 'failed',
+    'message': 'Another local generation is already running.',
+  };
 }

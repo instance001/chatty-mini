@@ -89,6 +89,8 @@ class InferenceController extends ChangeNotifier {
       if (returnedState == 'failed') {
         _awaitingRequestStart = false;
         _status = _status.copyWith(
+          state: 'failed',
+          assistantDraft: '',
           error:
               result['message'] as String? ??
               'Generation could not be started.',
@@ -107,7 +109,12 @@ class InferenceController extends ChangeNotifier {
       }
     } catch (error) {
       _awaitingRequestStart = false;
-      _status = _status.copyWith(state: 'failed', error: error.toString());
+      _status = _status.copyWith(
+        state: 'failed',
+        assistantDraft: '',
+        error: error.toString(),
+        clearCurrentRequestId: true,
+      );
     }
     notifyListeners();
   }
