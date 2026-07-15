@@ -612,10 +612,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final generationPrompt = _buildGenerationPrompt(
       characterPrompt: characterProfile.prompt,
       userPrompt: prompt,
-      modelLabel: selectedCloudModel?.label ?? selectedModel!.fileName,
       isCloud: selectedCloudModel != null,
-      selectedPreset: selectedPreset,
-      activeCharacterName: characterProfile.name,
       sandboxInstruction: sandboxInstruction,
     );
     if (selectedCloudModel != null) {
@@ -900,22 +897,12 @@ class _ChatScreenState extends State<ChatScreen> {
   String _buildGenerationPrompt({
     required String characterPrompt,
     required String userPrompt,
-    required String modelLabel,
     required bool isCloud,
-    required InferenceConfig selectedPreset,
-    required String activeCharacterName,
     required String? sandboxInstruction,
   }) {
     final buffer = StringBuffer()
       ..write('System:\n')
-      ..write(
-        _buildCockpitProtocol(
-          modelLabel: modelLabel,
-          isCloud: isCloud,
-          selectedPreset: selectedPreset,
-          activeCharacterName: activeCharacterName,
-        ),
-      )
+      ..write(_buildChatProtocol(isCloud: isCloud))
       ..write('\n\nCharacter overlay:\n')
       ..write(characterPrompt.trim());
     if (sandboxInstruction != null && sandboxInstruction.isNotEmpty) {
@@ -930,57 +917,22 @@ class _ChatScreenState extends State<ChatScreen> {
     return buffer.toString();
   }
 
-  String _buildCockpitProtocol({
-    required String modelLabel,
-    required bool isCloud,
-    required InferenceConfig selectedPreset,
-    required String activeCharacterName,
-  }) {
-    final sandboxFiles = _sandboxController.files;
-    final sandboxList = sandboxFiles.isEmpty
-        ? 'No sandbox files are present yet.'
-        : sandboxFiles
-              .take(6)
-              .map((file) => '- ${file.relativePath} (${file.fileType})')
-              .join('\n');
-    final hotContextList = _hotContextEntries.isEmpty
-        ? '- No hot context is currently pinned.'
-        : _hotContextEntries
-              .take(6)
-              .map((entry) => '- ${entry.title}: ${entry.body}')
-              .join('\n');
-    final rollingSummaryList = _rollingSummaryLines.isEmpty
-        ? '- No rolling summary is currently available.'
-        : _rollingSummaryLines.take(8).map((line) => '- $line').join('\n');
-    final coldLogList = _coldLogExcerptLines.isEmpty
-        ? '- No Cold Log notes are currently available.'
-        : _coldLogExcerptLines.take(6).map((line) => '- $line').join('\n');
+  String _buildChatProtocol({required bool isCloud}) {
+    final laneNote = isCloud
+        ? 'This reply uses the cloud model explicitly selected by the user.'
+        : 'This reply stays local on the user device.';
     return '''
-You are the assistant running inside Chatty-mini, a small portrait Android app with explicit local and optional cloud model lanes.
+Chat normally. Be lively, natural, and useful.
 
-Cockpit protocol:
-- You are inside the app, not outside it.
-- You have no browser, shell, hidden tools, or external file access. ${isCloud ? 'This reply uses the cloud model explicitly selected by the user.' : 'This reply stays fully local.'}
-- You help through chat only, using the app's visible local lanes and constraints.
-- The main chat surface is primary. Hot Context and Rolling Summary live on side rails.
-- The sandbox exists. It is a private local text-file lane for `.md`, `.txt`, and `.json` work.
-- If a user asks for notes, drafts, outlines, rewrites, JSON state, or saved text, treat the sandbox as the relevant file lane instead of acting like no file area exists.
-- When sandbox task mode is off, respond like a normal concise assistant.
-- When sandbox task mode is on, follow the sandbox task contract exactly.
-- Keep replies practical, direct, and small-phone friendly.
+Truth rails:
+- Admit uncertainty instead of guessing.
+- Do not claim real capabilities you do not have.
+- You have no browser, shell, hidden tools, or external file access. $laneNote
+- Do not claim you saved, opened, edited, uploaded, downloaded, or inspected anything unless the host supplied that action or context.
 
-Current app state:
-- Main model: $modelLabel (${isCloud ? 'Cloud' : 'Local'})
-- Preset: ${selectedPreset.label}
-- Active character profile: $activeCharacterName
-- Sandbox files:
-$sandboxList
-- Hot Context:
-$hotContextList
-- Rolling Summary:
-$rollingSummaryList
-- Cold Log excerpt:
-$coldLogList
+Action contract:
+- If a sandbox task contract is supplied below, obey it exactly.
+- Otherwise, answer the user directly as ordinary chat.
 ''';
   }
 
@@ -1066,26 +1018,18 @@ $assistantResponse
       if (requestedName.isEmpty) {
         return '''
 Sandbox task contract:
-- Sandbox task mode is ON.
-- This next turn is a file task, not ordinary chat.
-- Goal: prepare content for a new sandbox text file.
-- Missing required detail: the file name.
-- Acknowledge the sandbox briefly if useful, then ask only for the missing file name or extension.
-- Do not ask what format the user wants beyond the missing file name.
-- Do not ignore the sandbox and drift into plain chat.
+- The host activated sandbox mode for a new file task.
+- Missing required detail: file name.
+- Ask only for the missing file name or extension.
 ''';
       }
       return '''
 Sandbox task contract:
-- Sandbox task mode is ON.
-- This next turn is a file task, not ordinary chat.
-- Target action: create or populate sandbox file `$requestedName`.
+- The host activated sandbox mode for a new file task.
+- Target file: `$requestedName`.
 - Inferred file type: $inferredType.
-- Write as though the user wants content ready to save into that file right now.
-- Prefer delivering the file body directly instead of asking clarifying questions.
-- Do not ask whether the user wants chat output or file output. They already chose sandbox task mode.
-- Do not pretend the sandbox does not exist.
-- Unless a critical ambiguity blocks completion, your reply should be the file-ready contents for `$requestedName`, with no preamble like "Here is the file".
+- Return file-ready contents unless a critical ambiguity blocks completion.
+- Do not add a preamble like "Here is the file".
 - If the extension is `.json`, return valid JSON only.
 ''';
     }
@@ -1098,11 +1042,9 @@ Sandbox task contract:
                 .join(', ');
       return '''
 Sandbox task contract:
-- Sandbox task mode is ON.
-- This next turn is a file task, not ordinary chat.
-- Expected action: work on an existing sandbox file.
+- The host activated sandbox mode for an existing file task.
 - No target file is currently selected.
-- Ask the user to choose one existing sandbox file by name before continuing.
+- Ask the user to choose one existing file by name before continuing.
 - Available sandbox files: $availableFiles
 ''';
     }
@@ -1111,9 +1053,8 @@ Sandbox task contract:
       final contents = await _sandboxController.readFile(_sandboxTargetPath!);
       return '''
 Sandbox task contract:
-- Sandbox task mode is ON.
-- This next turn is a file task, not ordinary chat.
-- Target action: read, rewrite, or extend existing sandbox file `${_sandboxTargetPath!}`.
+- The host activated sandbox mode for an existing file task.
+- Target file: `${_sandboxTargetPath!}`.
 - Use the current file contents below as the source material.
 - Prefer returning the full revised file contents unless the user clearly asked for a smaller patch, summary, or diagnosis.
 - Preserve the file's apparent format and structure.
@@ -1127,8 +1068,8 @@ $contents
     } catch (error) {
       return '''
 Sandbox task contract:
-- Sandbox task mode is ON.
-- The selected sandbox file is `${_sandboxTargetPath!}`.
+- The host activated sandbox mode for a file task.
+- Target file: `${_sandboxTargetPath!}`.
 - Current contents could not be read: $error
 - Acknowledge the read failure briefly, then continue as a file-focused assistant.
 ''';
