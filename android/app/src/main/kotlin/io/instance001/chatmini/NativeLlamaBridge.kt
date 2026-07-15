@@ -1,5 +1,8 @@
 package io.instance001.chatmini
 
+import androidx.annotation.Keep
+
+@Keep
 class NativeLlamaBridge {
     private var callback: NativeGenerationCallback? = null
 
