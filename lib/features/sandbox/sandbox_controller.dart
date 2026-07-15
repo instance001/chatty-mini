@@ -126,4 +126,37 @@ class SandboxController extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<List<SandboxFileEntry>> importFiles(
+    Iterable<Map<Object?, Object?>> pickedFiles,
+  ) async {
+    _isSaving = true;
+    _error = null;
+    notifyListeners();
+    final imported = <SandboxFileEntry>[];
+    try {
+      for (final picked in pickedFiles) {
+        final fileName = picked['fileName'] as String?;
+        final contents = picked['contents'] as String?;
+        if (fileName == null || contents == null) {
+          continue;
+        }
+        imported.add(
+          await storage.importSandboxFile(
+            fileName: fileName,
+            contents: contents,
+          ),
+        );
+      }
+      await refresh();
+      return imported;
+    } catch (error) {
+      _error = error.toString();
+      notifyListeners();
+      return imported;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
 }

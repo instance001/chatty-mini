@@ -125,6 +125,7 @@ class AppSettings {
     required this.hasCompletedOnboarding,
     required this.activeCharacterProfileId,
     required this.characterProfiles,
+    required this.userDisplayName,
     required this.defaultSandboxTaskMode,
     required this.startupCharacterProfileId,
     required this.autoOpenModelInventoryIfUnassigned,
@@ -146,6 +147,7 @@ class AppSettings {
   final bool hasCompletedOnboarding;
   final String activeCharacterProfileId;
   final List<CharacterProfile> characterProfiles;
+  final String userDisplayName;
   final String defaultSandboxTaskMode;
   final String? startupCharacterProfileId;
   final bool autoOpenModelInventoryIfUnassigned;
@@ -171,6 +173,7 @@ class AppSettings {
     bool? hasCompletedOnboarding,
     String? activeCharacterProfileId,
     List<CharacterProfile>? characterProfiles,
+    String? userDisplayName,
     String? defaultSandboxTaskMode,
     String? startupCharacterProfileId,
     bool clearStartupCharacterProfile = false,
@@ -203,6 +206,7 @@ class AppSettings {
       activeCharacterProfileId:
           activeCharacterProfileId ?? this.activeCharacterProfileId,
       characterProfiles: characterProfiles ?? this.characterProfiles,
+      userDisplayName: userDisplayName ?? this.userDisplayName,
       defaultSandboxTaskMode:
           defaultSandboxTaskMode ?? this.defaultSandboxTaskMode,
       startupCharacterProfileId: clearStartupCharacterProfile
@@ -243,6 +247,7 @@ class AppSettings {
       'character_profiles': characterProfiles
           .map((profile) => profile.toJson())
           .toList(),
+      'user_display_name': userDisplayName,
       'default_sandbox_task_mode': defaultSandboxTaskMode,
       'startup_character_profile_id': startupCharacterProfileId,
       'auto_open_model_inventory_if_unassigned':
@@ -282,6 +287,15 @@ class AppSettings {
               .where((item) => item.id.isNotEmpty && item.model.isNotEmpty)
               .toList()
         : <CloudModelRecord>[];
+    final sandboxTaskMode =
+        (json['default_sandbox_task_mode'] as String?) ?? 'target_file';
+    final normalizedSandboxTaskMode = {
+      'target_file',
+      'read_file',
+      'new_file',
+    }.contains(sandboxTaskMode)
+        ? sandboxTaskMode
+        : 'target_file';
     return AppSettings(
       runtimeInstallMode:
           (json['runtime_install_mode'] as String?) ?? 'bundled',
@@ -302,8 +316,8 @@ class AppSettings {
           ? activeId
           : profiles.first.id,
       characterProfiles: profiles,
-      defaultSandboxTaskMode:
-          (json['default_sandbox_task_mode'] as String?) ?? 'target_file',
+      userDisplayName: (json['user_display_name'] as String?) ?? '',
+      defaultSandboxTaskMode: normalizedSandboxTaskMode,
       startupCharacterProfileId:
           json['startup_character_profile_id'] as String?,
       autoOpenModelInventoryIfUnassigned:
@@ -329,6 +343,7 @@ class AppSettings {
     hasCompletedOnboarding: false,
     activeCharacterProfileId: 'default_assistant',
     characterProfiles: [CharacterProfile.defaultAssistant],
+    userDisplayName: '',
     defaultSandboxTaskMode: 'target_file',
     startupCharacterProfileId: null,
     autoOpenModelInventoryIfUnassigned: true,

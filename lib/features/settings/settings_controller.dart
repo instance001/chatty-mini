@@ -27,6 +27,7 @@ class SettingsController extends ChangeNotifier {
   String? get lastSandboxFilePath => _settings.lastSandboxFilePath;
   String? get lastMemoryFilePath => _settings.lastMemoryFilePath;
   String? get lastCharacterProfileId => _settings.lastCharacterProfileId;
+  String get userDisplayName => _settings.userDisplayName;
   List<CharacterProfile> get characterProfiles => _settings.characterProfiles;
 
   Future<void> initialize() async {
@@ -59,6 +60,15 @@ class SettingsController extends ChangeNotifier {
   Future<void> setDefaultSandboxTaskMode(String mode) async {
     _settings = _settings.copyWith(defaultSandboxTaskMode: mode);
     await _persist('Default sandbox mode updated.');
+  }
+
+  Future<void> setUserDisplayName(String name) async {
+    _settings = _settings.copyWith(userDisplayName: name.trim());
+    await _persist(
+      name.trim().isEmpty
+          ? 'User name cleared.'
+          : 'Chatty will use that name.',
+    );
   }
 
   Future<void> setStartupCharacterProfileId(String? profileId) async {

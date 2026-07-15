@@ -132,6 +132,26 @@ class AppStorageService {
     );
   }
 
+  Future<SandboxFileEntry> importSandboxFile({
+    required String fileName,
+    required String contents,
+  }) async {
+    final fileType = _typeForExtension(fileName.split('.').last.toLowerCase());
+    final cleanName = _sanitizeFileName(fileName, fileType);
+    final snapshot = await ensureInitialized();
+    final file = await _resolveUniqueSandboxFile(snapshot.sandboxDir, cleanName);
+    await file.writeAsString(contents);
+    final stat = await file.stat();
+    return SandboxFileEntry(
+      relativePath: file.path
+          .substring(snapshot.sandboxDir.path.length + 1)
+          .replaceAll('\\', '/'),
+      fileType: fileType,
+      sizeBytes: stat.size,
+      modifiedAt: stat.modified,
+    );
+  }
+
   Future<void> deleteSandboxFiles(Iterable<String> relativePaths) async {
     for (final relativePath in relativePaths) {
       final file = await _resolveSandboxFile(relativePath);
@@ -441,6 +461,7 @@ class AppStorageService {
                   'Be concise, practical, and calm. Focus on helping with the current task on a small local-device chat app.',
             },
           ],
+          'user_display_name': '',
           'default_sandbox_task_mode': 'target_file',
           'startup_character_profile_id': null,
           'auto_open_model_inventory_if_unassigned': true,
@@ -532,6 +553,22 @@ Future<File> _resolveUniqueModelFile(
   var suffix = 2;
   while (await candidate.exists()) {
     candidate = File('${modelsDir.path}/${stem}_$suffix.gguf');
+    suffix += 1;
+  }
+  return candidate;
+}
+
+Future<File> _resolveUniqueSandboxFile(
+  Directory sandboxDir,
+  String fileName,
+) async {
+  final dotIndex = fileName.lastIndexOf('.');
+  final stem = dotIndex > 0 ? fileName.substring(0, dotIndex) : fileName;
+  final extension = dotIndex > 0 ? fileName.substring(dotIndex) : '';
+  var candidate = File('${sandboxDir.path}/$fileName');
+  var suffix = 2;
+  while (await candidate.exists()) {
+    candidate = File('${sandboxDir.path}/${stem}_$suffix$extension');
     suffix += 1;
   }
   return candidate;

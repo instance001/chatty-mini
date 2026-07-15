@@ -3,6 +3,7 @@ package io.instance001.chatmini
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.provider.OpenableColumns
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -11,6 +12,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
     private val modelImportRequestCode = 6012
     private val sandboxExportRequestCode = 6013
+    private val sandboxImportRequestCode = 6014
     private val runtimeChannel = "chatty_mini/runtime_bridge"
     private val inferenceChannel = "chatty_mini/inference_bridge"
     private val inferenceEventsChannel = "chatty_mini/inference_events"
@@ -26,6 +28,7 @@ class MainActivity : FlutterActivity() {
     private var pendingModelsDirPath: String? = null
     private var pendingExportResult: MethodChannel.Result? = null
     private var pendingExportBytes: ByteArray? = null
+    private var pendingSandboxImportResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -151,6 +154,19 @@ class MainActivity : FlutterActivity() {
                         startActivityForResult(intent, sandboxExportRequestCode)
                     }
                 }
+                "importFiles" -> {
+                    if (pendingSandboxImportResult != null) {
+                        result.error("import_in_progress", "Another sandbox import is already running.", null)
+                    } else {
+                        pendingSandboxImportResult = result
+                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                            type = "*/*"
+                        }
+                        startActivityForResult(intent, sandboxImportRequestCode)
+                    }
+                }
                 else -> result.notImplemented()
             }
         }
@@ -247,6 +263,43 @@ class MainActivity : FlutterActivity() {
             }
             return
         }
+        if (requestCode == sandboxImportRequestCode) {
+            val result = pendingSandboxImportResult
+            pendingSandboxImportResult = null
+            if (result == null) return
+            if (resultCode != Activity.RESULT_OK || data == null) {
+                result.success(emptyList<Map<String, Any>>())
+                return
+            }
+
+            val uris = mutableListOf<Uri>()
+            data.data?.let { uris.add(it) }
+            val clipData = data.clipData
+            if (clipData != null) {
+                for (index in 0 until clipData.itemCount) {
+                    uris.add(clipData.getItemAt(index).uri)
+                }
+            }
+
+            try {
+                val imported = uris.distinct().mapNotNull { uri ->
+                    val fileName = queryDisplayName(uri) ?: uri.lastPathSegment ?: "imported.txt"
+                    val extension = fileName.substringAfterLast('.', "").lowercase()
+                    if (extension !in setOf("md", "txt", "json")) {
+                        null
+                    } else {
+                        val text = contentResolver.openInputStream(uri)?.use { stream ->
+                            stream.readBytes().toString(Charsets.UTF_8)
+                        } ?: ""
+                        mapOf("fileName" to fileName, "contents" to text)
+                    }
+                }
+                result.success(imported)
+            } catch (error: Exception) {
+                result.error("sandbox_import_failed", error.message, null)
+            }
+            return
+        }
         if (requestCode != modelImportRequestCode) {
             return
         }
@@ -286,6 +339,14 @@ class MainActivity : FlutterActivity() {
             result.success(importedNames)
         } catch (error: Exception) {
             result.error("model_import_failed", error.message, null)
+        }
+    }
+
+    private fun queryDisplayName(uri: Uri): String? {
+        val cursor = contentResolver.query(uri, null, null, null, null) ?: return null
+        cursor.use {
+            val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            return if (nameIndex >= 0 && it.moveToFirst()) it.getString(nameIndex) else null
         }
     }
 }

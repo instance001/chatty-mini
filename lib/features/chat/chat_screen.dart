@@ -25,7 +25,7 @@ import '../settings/settings_sheet.dart';
 import '../settings/settings_controller.dart';
 import 'chat_models.dart';
 
-enum SandboxTaskMode { targetFile, newFile }
+enum SandboxTaskMode { targetFile, readFile, newFile }
 
 enum AppSurfaceId { sandbox, models, memory, characters, settings, help }
 
@@ -487,13 +487,19 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   SandboxTaskMode _sandboxTaskModeFromSetting(String value) {
-    return value == 'new_file'
-        ? SandboxTaskMode.newFile
-        : SandboxTaskMode.targetFile;
+    return switch (value) {
+      'read_file' => SandboxTaskMode.readFile,
+      'new_file' => SandboxTaskMode.newFile,
+      _ => SandboxTaskMode.targetFile,
+    };
   }
 
   String _sandboxTaskModeToSetting(SandboxTaskMode value) {
-    return value == SandboxTaskMode.newFile ? 'new_file' : 'target_file';
+    return switch (value) {
+      SandboxTaskMode.readFile => 'read_file',
+      SandboxTaskMode.newFile => 'new_file',
+      SandboxTaskMode.targetFile => 'target_file',
+    };
   }
 
   void _rememberSurface(AppSurfaceId surface) {
@@ -613,6 +619,7 @@ class _ChatScreenState extends State<ChatScreen> {
       characterPrompt: characterProfile.prompt,
       userPrompt: prompt,
       isCloud: selectedCloudModel != null,
+      userDisplayName: _settingsController.userDisplayName,
       sandboxInstruction: sandboxInstruction,
     );
     if (selectedCloudModel != null) {
@@ -654,7 +661,9 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     }
 
-    if (_sandboxTargetPath == null || _sandboxTargetPath!.trim().isEmpty) {
+    if (_sandboxTaskMode == SandboxTaskMode.readFile ||
+        _sandboxTargetPath == null ||
+        _sandboxTargetPath!.trim().isEmpty) {
       return null;
     }
     return _PendingSandboxWrite.targetFile(relativePath: _sandboxTargetPath!);
@@ -898,11 +907,17 @@ class _ChatScreenState extends State<ChatScreen> {
     required String characterPrompt,
     required String userPrompt,
     required bool isCloud,
+    required String userDisplayName,
     required String? sandboxInstruction,
   }) {
     final buffer = StringBuffer()
       ..write('System:\n')
-      ..write(_buildChatProtocol(isCloud: isCloud))
+      ..write(
+        _buildChatProtocol(
+          isCloud: isCloud,
+          userDisplayName: userDisplayName,
+        ),
+      )
       ..write('\n\nCharacter overlay:\n')
       ..write(characterPrompt.trim());
     if (sandboxInstruction != null && sandboxInstruction.isNotEmpty) {
@@ -917,18 +932,26 @@ class _ChatScreenState extends State<ChatScreen> {
     return buffer.toString();
   }
 
-  String _buildChatProtocol({required bool isCloud}) {
+  String _buildChatProtocol({
+    required bool isCloud,
+    required String userDisplayName,
+  }) {
     final laneNote = isCloud
         ? 'This reply uses the cloud model explicitly selected by the user.'
         : 'This reply stays local on the user device.';
+    final nameNote = userDisplayName.trim().isEmpty
+        ? ''
+        : '\n- The user likes to be called ${userDisplayName.trim()}.';
     return '''
 Chat normally. Be lively, natural, and useful.
 
 Truth rails:
+- Chatty-mini is a private local AI chat and text-file workspace.
 - Admit uncertainty instead of guessing.
-- Do not claim real capabilities you do not have.
-- You have no browser, shell, hidden tools, or external file access. $laneNote
-- Do not claim you saved, opened, edited, uploaded, downloaded, or inspected anything unless the host supplied that action or context.
+- It does not browse, message other people, or handle images/video. $laneNote
+- Do not claim real capabilities you do not have, including saving, opening, editing, uploading, downloading, or inspecting anything unless the host supplied that action or context.
+- Outside those factual capability limits, respond naturally and creatively.
+$nameNote
 
 Action contract:
 - If a sandbox task contract is supplied below, obey it exactly.
@@ -1051,6 +1074,21 @@ Sandbox task contract:
 
     try {
       final contents = await _sandboxController.readFile(_sandboxTargetPath!);
+      if (_sandboxTaskMode == SandboxTaskMode.readFile) {
+        return '''
+Sandbox task contract:
+- The host activated sandbox mode for a read-only file task.
+- Target file: `${_sandboxTargetPath!}`.
+- Use the current file contents below as source material.
+- Answer the user directly from the file.
+- Do not rewrite the full file unless the user explicitly asks for a rewritten version.
+
+Current contents of `${_sandboxTargetPath!}`:
+```
+$contents
+```
+''';
+      }
       return '''
 Sandbox task contract:
 - The host activated sandbox mode for an existing file task.
@@ -1320,7 +1358,7 @@ Sandbox task contract:
                               onSandboxTaskModeChanged: (value) {
                                 setState(() {
                                   _sandboxTaskMode = value;
-                                  if (value == SandboxTaskMode.targetFile &&
+                                  if (value != SandboxTaskMode.newFile &&
                                       _sandboxTargetPath == null &&
                                       _sandboxController.files.isNotEmpty) {
                                     _sandboxTargetPath = _sandboxController
@@ -2387,6 +2425,10 @@ class _SandboxTaskStrip extends StatelessWidget {
                             child: Text('Target'),
                           ),
                           DropdownMenuItem(
+                            value: SandboxTaskMode.readFile,
+                            child: Text('Read'),
+                          ),
+                          DropdownMenuItem(
                             value: SandboxTaskMode.newFile,
                             child: Text('New file'),
                           ),
@@ -2407,7 +2449,8 @@ class _SandboxTaskStrip extends StatelessWidget {
           ),
           if (enabled) ...[
             SizedBox(height: compactMode ? 6 : 8),
-            if (mode == SandboxTaskMode.targetFile)
+            if (mode == SandboxTaskMode.targetFile ||
+                mode == SandboxTaskMode.readFile)
               files.isEmpty
                   ? Text(
                       'No sandbox files available yet. Create one in the sandbox tray first.',
@@ -2423,8 +2466,10 @@ class _SandboxTaskStrip extends StatelessWidget {
                           ? targetPath
                           : files.first.relativePath,
                       isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Target file',
+                      decoration: InputDecoration(
+                        labelText: mode == SandboxTaskMode.readFile
+                            ? 'Read file'
+                            : 'Target file',
                       ),
                       items: files
                           .map(

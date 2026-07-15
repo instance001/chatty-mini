@@ -6,6 +6,7 @@ import 'settings_controller.dart';
 const _retentionOptions = [10, 25, 50, 100];
 const _sandboxModeOptions = {
   'target_file': 'Target file',
+  'read_file': 'Read file',
   'new_file': 'New file',
 };
 
@@ -189,6 +190,12 @@ class SettingsSheet extends StatelessWidget {
                           style: theme.textTheme.labelLarge,
                         ),
                         const SizedBox(height: 10),
+                        _UserDisplayNameField(
+                          initialValue: settingsController.userDisplayName,
+                          isSaving: settingsController.isSaving,
+                          onSave: settingsController.setUserDisplayName,
+                        ),
+                        const SizedBox(height: 10),
                         DropdownButtonFormField<String>(
                           initialValue:
                               settingsController.defaultSandboxTaskMode,
@@ -354,6 +361,73 @@ class SettingsSheet extends StatelessWidget {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _UserDisplayNameField extends StatefulWidget {
+  const _UserDisplayNameField({
+    required this.initialValue,
+    required this.isSaving,
+    required this.onSave,
+  });
+
+  final String initialValue;
+  final bool isSaving;
+  final ValueChanged<String> onSave;
+
+  @override
+  State<_UserDisplayNameField> createState() => _UserDisplayNameFieldState();
+}
+
+class _UserDisplayNameFieldState extends State<_UserDisplayNameField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void didUpdateWidget(covariant _UserDisplayNameField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialValue != oldWidget.initialValue &&
+        _controller.text.trim() == oldWidget.initialValue.trim()) {
+      _controller.text = widget.initialValue;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    if (widget.isSaving) {
+      return;
+    }
+    widget.onSave(_controller.text);
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      textInputAction: TextInputAction.done,
+      onSubmitted: (_) => _save(),
+      onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+      decoration: InputDecoration(
+        labelText: 'What would you like Chatty to call you?',
+        hintText: 'Optional',
+        suffixIcon: IconButton(
+          tooltip: 'Save name',
+          onPressed: widget.isSaving ? null : _save,
+          icon: const Icon(Icons.check),
         ),
       ),
     );

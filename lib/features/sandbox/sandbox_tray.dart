@@ -88,6 +88,14 @@ class _SandboxTrayState extends State<SandboxTray> {
                         ),
                       ),
                       IconButton(
+                        tooltip: 'Import file',
+                        onPressed: widget.controller.isSaving
+                            ? null
+                            : _importFiles,
+                        icon: const Icon(Icons.file_upload_outlined),
+                      ),
+                      const SizedBox(width: 6),
+                      IconButton(
                         tooltip: 'Create file',
                         onPressed: widget.controller.isSaving
                             ? null
@@ -261,6 +269,36 @@ class _SandboxTrayState extends State<SandboxTray> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Could not export file: $error')));
+    }
+  }
+
+  Future<void> _importFiles() async {
+    try {
+      final picked = await _sandboxExportChannel.invokeListMethod<Object?>(
+        'importFiles',
+      );
+      if (picked == null || picked.isEmpty) {
+        return;
+      }
+      final imported = await widget.controller.importFiles(
+        picked.whereType<Map>().map((entry) => Map<Object?, Object?>.from(entry)),
+      );
+      if (!mounted) {
+        return;
+      }
+      final message = imported.isEmpty
+          ? 'No supported sandbox files selected'
+          : 'Imported ${imported.length} sandbox file${imported.length == 1 ? '' : 's'}';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not import file: $error')));
     }
   }
 }
