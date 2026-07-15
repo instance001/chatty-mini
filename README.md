@@ -65,6 +65,14 @@ Local GGUF use does not send prompts or files to FMI. When a user explicitly sel
 
 - User manual: [docs/USER_MANUAL.md](docs/USER_MANUAL.md)
 
+## License
+
+Chatty-mini is free and open-source software released under the [GNU Affero General Public License v3.0](LICENSE).
+
+You may use, study, modify, and redistribute the software under the AGPLv3 terms. If you modify Chatty-mini and make it available for others to use over a network, you must also offer those users the corresponding source code for your modified version as required by the licence.
+
+Bundled and vendored third-party components, including `llama.cpp`, retain their respective upstream copyright and licence notices.
+
 ## Development
 
 ### Requirements
