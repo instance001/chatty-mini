@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:app/app/app_shell.dart';
+import 'package:app/core/inference/inference_controller.dart';
+import 'package:app/core/inference/inference_models.dart';
+import 'package:app/core/inference/inference_service.dart';
 import 'package:app/core/storage/app_storage.dart';
 import 'package:app/features/sandbox/sandbox_controller.dart';
 import 'package:app/features/sandbox/sandbox_models.dart';
@@ -97,6 +102,37 @@ void main() {
     expect(find.text('Edit sandbox file...'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  test('fast local completion does not leave inference stuck generating', () async {
+    final service = _FastCompletionInferenceService();
+    final controller = InferenceController(service: service);
+    addTearDown(controller.dispose);
+
+    await controller.initialize();
+    await controller.loadModelWithSettings(
+      modelPath: 'C:/models/test.gguf',
+      contextSize: 1536,
+      gpuLayers: 0,
+    );
+
+    await controller.startGeneration(
+      request: const GenerationRequest(
+        prompt: 'Hello',
+        modelPath: 'C:/models/test.gguf',
+        contextSize: 1536,
+        maxTokens: 96,
+        temperature: 0.7,
+        topP: 0.9,
+        topK: 40,
+        gpuLayers: 0,
+      ),
+    );
+
+    expect(controller.status.state, 'completed');
+    expect(controller.status.isGenerating, isFalse);
+    expect(controller.status.currentRequestId, isNull);
+    expect(controller.status.completedResponse, 'Quick reply');
+  });
 }
 
 class _TestSandboxController extends SandboxController {
@@ -114,4 +150,47 @@ class _TestSandboxController extends SandboxController {
 
   @override
   Future<String> readFile(String relativePath) async => '# Test\n';
+}
+
+class _FastCompletionInferenceService extends InferenceService {
+  final StreamController<Map<Object?, Object?>> _events =
+      StreamController<Map<Object?, Object?>>.broadcast();
+
+  @override
+  Stream<Map<Object?, Object?>> generationEvents() => _events.stream;
+
+  @override
+  Future<Map<Object?, Object?>> loadModel({
+    required String modelPath,
+    required int contextSize,
+    required int gpuLayers,
+  }) async => {
+    'state': 'loaded',
+    'message': 'Loaded',
+  };
+
+  @override
+  Future<Map<Object?, Object?>> startGeneration(
+    GenerationRequest request,
+  ) async {
+    const requestId = 'req-fast';
+    _events.add({
+      'type': 'started',
+      'requestId': requestId,
+    });
+    _events.add({
+      'type': 'completed',
+      'requestId': requestId,
+      'text': 'Quick reply',
+    });
+    await Future<void>.delayed(const Duration(milliseconds: 1));
+    return {
+      'state': 'generating',
+      'requestId': requestId,
+      'message': 'Local llama.cpp generation started.',
+    };
+  }
+
+  @override
+  Future<void> cancelGeneration({required String requestId}) async {}
 }

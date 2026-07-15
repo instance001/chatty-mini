@@ -84,21 +84,25 @@ class InferenceController extends ChangeNotifier {
       }
       _awaitingRequestStart = true;
       final result = await service.startGeneration(request);
-      _status = _status.copyWith(
-        state: (result['state'] as String?) ?? 'generating',
-        currentRequestId: result['requestId'] as String?,
-        assistantDraft: '',
-        statusMessage: result['message'] as String?,
-        clearCompletedResponse: true,
-        clearError: true,
-      );
-      if (_status.state == 'failed') {
+      final returnedState = (result['state'] as String?) ?? 'generating';
+      final returnedRequestId = result['requestId'] as String?;
+      if (returnedState == 'failed') {
         _awaitingRequestStart = false;
         _status = _status.copyWith(
           error:
               result['message'] as String? ??
               'Generation could not be started.',
+          statusMessage: result['message'] as String?,
           clearCurrentRequestId: true,
+        );
+      } else if (_awaitingRequestStart) {
+        _status = _status.copyWith(
+          state: returnedState,
+          currentRequestId: returnedRequestId,
+          assistantDraft: '',
+          statusMessage: result['message'] as String?,
+          clearCompletedResponse: true,
+          clearError: true,
         );
       }
     } catch (error) {
