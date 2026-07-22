@@ -58,6 +58,7 @@ That means:
 
 Local GGUF use does not send prompts or files to FMI. When a user explicitly selects a configured cloud model, Chatty-mini sends the prompt and relevant app context directly to that provider or custom endpoint. Cloud API keys are encrypted locally using Android Keystore.
 
+- [Google Play](https://play.google.com/store/apps/details?id=io.instance001.chatmini)
 - [Chatty-mini Privacy Policy](https://instance001.github.io/privacy/chatty-mini.html)
 - [FMI Google Play releases](https://instance001.github.io/google-play.html)
 
