@@ -1,6 +1,6 @@
 # Chatty-mini
 
-Chatty-mini is a portrait-first Android Flutter app for local GGUF chat on small phones.
+Chatty-mini is a portrait-first Android Flutter app for local GGUF chat on small phones, with optional user-configured cloud lanes when a hosted provider is the better fit.
 
 It is intentionally narrow in scope:
 
@@ -12,6 +12,8 @@ It is intentionally narrow in scope:
 - sandbox files for lightweight local notes and JSON state
 - saved character prompt profiles
 - hot context and rolling summary side rails
+
+The operating stance is local first, cloud optional: local when you want device-side control, cloud when you deliberately choose a provider.
 
 ## Current Direction
 
@@ -56,7 +58,7 @@ That means:
 
 ## Privacy
 
-Local GGUF use does not send prompts or files to FMI. When a user explicitly selects a configured cloud model, Chatty-mini sends the prompt and relevant app context directly to that provider or custom endpoint. Cloud API keys are encrypted locally using Android Keystore.
+Local GGUF use does not send prompts or files to FMI. When a user explicitly selects a configured cloud model, Chatty-mini sends the prompt and relevant app context directly to that provider or custom endpoint. Cloud API keys are encrypted locally using Android Keystore. No cloud lane is selected implicitly.
 
 - [Google Play](https://play.google.com/store/apps/details?id=io.instance001.chatmini)
 - [Chatty-mini Privacy Policy](https://instance001.github.io/privacy/chatty-mini.html)
@@ -65,6 +67,7 @@ Local GGUF use does not send prompts or files to FMI. When a user explicitly sel
 ## Documentation
 
 - User manual: [docs/USER_MANUAL.md](docs/USER_MANUAL.md)
+- Glossary: [GLOSSARY.md](GLOSSARY.md)
 
 ## License
 

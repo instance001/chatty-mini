@@ -14,6 +14,7 @@ In simple terms:
 - the model is the "brain" file you import
 - the runtime is the local engine that reads that model file
 - no cloud AI account is required for local chatting inside this app
+- optional cloud providers can be configured later if you choose that route
 
 Chatty-mini is designed for small portrait phones, so most of the screen is reserved for chat.
 
@@ -27,6 +28,8 @@ That usually means:
 - offline use is possible
 - speed depends on your phone
 - larger models may be slow or may fail on low-memory devices
+
+Local is the baseline, not a lock-in. If you configure a cloud provider, Chatty-mini treats that as a deliberate lane choice for that request.
 
 ## What a GGUF File Is
 
@@ -425,6 +428,7 @@ That means:
 - sandbox files live on the device
 - memory/log files live on the device
 - chats are intended to stay local in this app flow
+- cloud providers receive content only when you choose a configured cloud model for the request
 
 You should still use normal device hygiene:
 
