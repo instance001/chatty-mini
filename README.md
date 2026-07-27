@@ -27,6 +27,39 @@ The app is being shaped for devices like the Samsung A21s and similar small port
 
 Most detailed system information is pushed into trays and sheets so the main screen stays focused on "open app, see local, chat."
 
+## App Flow Map
+
+```mermaid
+flowchart TB
+    user["Phone user"] --> shell["Portrait Flutter shell<br/>compact chat-first surface"]
+
+    shell --> inventory["Model inventory<br/>GGUF import + role assignment"]
+    inventory --> main["Main AI<br/>primary conversation role"]
+    inventory --> bookkeeper["Bookkeeper<br/>optional recap / memory support role"]
+
+    main --> local["Local GGUF lane<br/>bundled native runtime"]
+    bookkeeper --> local
+    main --> cloud["Explicit cloud lane<br/>user-configured provider"]
+
+    shell --> persona["Character prompt profiles<br/>active system prompt"]
+    shell --> memory["Hot context + rolling summary<br/>private memory side rails"]
+    shell --> sandbox["Sandbox tray<br/>local .md / .txt / .json workspace"]
+
+    persona --> prompt["Prompt assembly<br/>persona + memory + sandbox intent + user message"]
+    memory --> prompt
+    sandbox --> prompt
+    prompt --> local
+    prompt --> cloud
+
+    local --> chat["Chat response"]
+    cloud --> chat
+    chat --> shell
+
+    storage["Private app storage<br/>models, metadata, memory, sandbox files"] -.-> inventory
+    storage -.-> memory
+    storage -.-> sandbox
+```
+
 ## Main Features
 
 - Bundled Android native runtime packaged with the app build
