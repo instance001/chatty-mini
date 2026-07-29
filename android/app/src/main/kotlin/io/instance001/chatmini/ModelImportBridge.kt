@@ -11,8 +11,8 @@ import java.io.InputStream
 class ModelImportBridge(private val contentResolver: ContentResolver) {
     fun importUriToModelsDir(uri: Uri, modelsDirPath: String): String {
         val modelsDir = File(modelsDirPath)
-        if (!modelsDir.exists()) {
-            modelsDir.mkdirs()
+        if (!modelsDir.exists() && !modelsDir.mkdirs()) {
+            throw IllegalStateException("Unable to create private model storage.")
         }
 
         val displayName = queryDisplayName(uri) ?: "imported_model.gguf"
@@ -57,11 +57,14 @@ class ModelImportBridge(private val contentResolver: ContentResolver) {
     private fun sanitizeModelFileName(input: String): String {
         val sanitized = input
             .trim()
-            .replace(Regex("[^a-zA-Z0-9_\\-./ ]"), "")
+            .replace(Regex("[^a-zA-Z0-9_\\-. ]"), "")
             .replace(' ', '_')
         require(sanitized.isNotEmpty()) { "Model file name cannot be empty." }
-        require(!sanitized.contains("..")) { "Model file name cannot contain '..'." }
-        return if (sanitized.lowercase().endsWith(".gguf")) sanitized else "$sanitized.gguf"
+        require(!sanitized.contains("..") && !sanitized.contains("/") && !sanitized.contains("\\")) {
+            "Model file name cannot contain path separators."
+        }
+        require(sanitized.lowercase().endsWith(".gguf")) { "Model file must use the .gguf extension." }
+        return sanitized
     }
 
     private fun resolveUniqueModelFile(modelsDir: File, fileName: String): File {

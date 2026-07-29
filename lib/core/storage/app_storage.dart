@@ -139,7 +139,10 @@ class AppStorageService {
     final fileType = _typeForExtension(fileName.split('.').last.toLowerCase());
     final cleanName = _sanitizeFileName(fileName, fileType);
     final snapshot = await ensureInitialized();
-    final file = await _resolveUniqueSandboxFile(snapshot.sandboxDir, cleanName);
+    final file = await _resolveUniqueSandboxFile(
+      snapshot.sandboxDir,
+      cleanName,
+    );
     await file.writeAsString(contents);
     final stat = await file.stat();
     return SandboxFileEntry(
@@ -531,16 +534,20 @@ String _starterContentForType(String fileType) {
 String _sanitizeModelFileName(String input) {
   final base = input
       .trim()
-      .replaceAll(RegExp(r'[^a-zA-Z0-9_\-./ ]'), '')
+      .replaceAll(RegExp(r'[^a-zA-Z0-9_\-. ]'), '')
       .replaceAll(' ', '_');
   if (base.isEmpty) {
     throw SandboxFileException('Model file name cannot be empty.');
   }
-  if (base.contains('..')) {
-    throw SandboxFileException('Model file name cannot contain `..`.');
+  if (base.contains('..') || base.contains('/') || base.contains('\\')) {
+    throw SandboxFileException(
+      'Model file name cannot contain path separators.',
+    );
   }
-  final normalized = base.toLowerCase().endsWith('.gguf') ? base : '$base.gguf';
-  return normalized;
+  if (!base.toLowerCase().endsWith('.gguf')) {
+    throw SandboxFileException('Model file must use the .gguf extension.');
+  }
+  return base;
 }
 
 Future<File> _resolveUniqueModelFile(
