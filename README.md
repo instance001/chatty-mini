@@ -15,6 +15,16 @@ It is intentionally narrow in scope:
 
 The operating stance is local first, cloud optional: local when you want device-side control, cloud when you deliberately choose a provider.
 
+## Screenshots
+
+![Chatty-mini main chat](<./assets/branding/01-main-chat-cloud-original-trim.png>)
+
+| Chat and memory | Tools and setup |
+| --- | --- |
+| ![Chatty-mini hot context](<./assets/branding/02-hot-context-original-trim.png>) | ![Chatty-mini model inventory](<./assets/branding/07-model-inventory-original-trim.png>) |
+| ![Chatty-mini rolling summary](<./assets/branding/03-rolling-summary-original-trim.png>) | ![Chatty-mini sandbox tray](<./assets/branding/04-sandbox-tray-original-trim.png>) |
+| ![Chatty-mini local sandbox chat](<./assets/branding/05-local-sandbox-chat-original-trim.png>) | ![Chatty-mini character prompt](<./assets/branding/06-character-prompt-original-trim.png>) |
+
 ## Current Direction
 
 The app is being shaped for devices like the Samsung A21s and similar small portrait Android phones. The main hierarchy is:
