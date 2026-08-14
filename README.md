@@ -25,6 +25,8 @@ The operating stance is local first, cloud optional: local when you want device-
 | ![Chatty-mini rolling summary](<./assets/branding/03-rolling-summary-original-trim.png>) | ![Chatty-mini sandbox tray](<./assets/branding/04-sandbox-tray-original-trim.png>) |
 | ![Chatty-mini local sandbox chat](<./assets/branding/05-local-sandbox-chat-original-trim.png>) | ![Chatty-mini character prompt](<./assets/branding/06-character-prompt-original-trim.png>) |
 
+![Chatty-mini dark mode settings](<./assets/branding/Screenshot_20260815-081119.jpg>)
+
 ## Current Direction
 
 The app is being shaped for devices like the Samsung A21s and similar small portrait Android phones. The main hierarchy is:

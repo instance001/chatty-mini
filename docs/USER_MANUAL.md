@@ -100,6 +100,18 @@ The newest streamed text should stay near the composer as replies arrive.
 
 This is where you type your message and send it to the local model.
 
+### Settings
+
+The Settings area includes app-level controls such as:
+
+- session logging
+- session log retention
+- display name
+- appearance
+- startup and workspace resume behavior
+
+Use `Appearance` to choose whether Chatty-mini follows the device theme, stays in light mode, or stays in dark mode.
+
 ### Hot Context And Rolling Summary
 
 The left `Hot Context` bump and right `Summary` bump are live memory panels.
@@ -330,6 +342,18 @@ You can configure:
 - whether logging is on
 - how many recent logs to keep
 - clearing all session logs
+
+### Dark Mode
+
+The `Appearance` setting controls the app theme.
+
+Options are:
+
+- `Use device setting`
+- `Light`
+- `Dark`
+
+Choose `Dark` to keep Chatty-mini in dark mode even when the phone is not using a dark system theme.
 
 ## Runtime Details Sheet
 
