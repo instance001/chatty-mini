@@ -9,6 +9,11 @@ const _sandboxModeOptions = {
   'read_file': 'Read file',
   'new_file': 'New file',
 };
+const _themeModeOptions = {
+  'system': 'Use device setting',
+  'light': 'Light',
+  'dark': 'Dark',
+};
 
 Future<void> showSettingsSheet({
   required BuildContext context,
@@ -194,6 +199,28 @@ class SettingsSheet extends StatelessWidget {
                           initialValue: settingsController.userDisplayName,
                           isSaving: settingsController.isSaving,
                           onSave: settingsController.setUserDisplayName,
+                        ),
+                        const SizedBox(height: 10),
+                        DropdownButtonFormField<String>(
+                          initialValue: settingsController.themeMode,
+                          decoration: const InputDecoration(
+                            labelText: 'Appearance',
+                          ),
+                          items: _themeModeOptions.entries
+                              .map(
+                                (entry) => DropdownMenuItem<String>(
+                                  value: entry.key,
+                                  child: Text(entry.value),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: settingsController.isSaving
+                              ? null
+                              : (value) {
+                                  if (value != null) {
+                                    settingsController.setThemeMode(value);
+                                  }
+                                },
                         ),
                         const SizedBox(height: 10),
                         DropdownButtonFormField<String>(

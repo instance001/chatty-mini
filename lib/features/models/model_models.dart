@@ -126,6 +126,7 @@ class AppSettings {
     required this.activeCharacterProfileId,
     required this.characterProfiles,
     required this.userDisplayName,
+    required this.themeMode,
     required this.defaultSandboxTaskMode,
     required this.startupCharacterProfileId,
     required this.autoOpenModelInventoryIfUnassigned,
@@ -148,6 +149,7 @@ class AppSettings {
   final String activeCharacterProfileId;
   final List<CharacterProfile> characterProfiles;
   final String userDisplayName;
+  final String themeMode;
   final String defaultSandboxTaskMode;
   final String? startupCharacterProfileId;
   final bool autoOpenModelInventoryIfUnassigned;
@@ -174,6 +176,7 @@ class AppSettings {
     String? activeCharacterProfileId,
     List<CharacterProfile>? characterProfiles,
     String? userDisplayName,
+    String? themeMode,
     String? defaultSandboxTaskMode,
     String? startupCharacterProfileId,
     bool clearStartupCharacterProfile = false,
@@ -207,6 +210,7 @@ class AppSettings {
           activeCharacterProfileId ?? this.activeCharacterProfileId,
       characterProfiles: characterProfiles ?? this.characterProfiles,
       userDisplayName: userDisplayName ?? this.userDisplayName,
+      themeMode: _normalizeThemeMode(themeMode ?? this.themeMode),
       defaultSandboxTaskMode:
           defaultSandboxTaskMode ?? this.defaultSandboxTaskMode,
       startupCharacterProfileId: clearStartupCharacterProfile
@@ -248,6 +252,7 @@ class AppSettings {
           .map((profile) => profile.toJson())
           .toList(),
       'user_display_name': userDisplayName,
+      'theme_mode': themeMode,
       'default_sandbox_task_mode': defaultSandboxTaskMode,
       'startup_character_profile_id': startupCharacterProfileId,
       'auto_open_model_inventory_if_unassigned':
@@ -289,11 +294,8 @@ class AppSettings {
         : <CloudModelRecord>[];
     final sandboxTaskMode =
         (json['default_sandbox_task_mode'] as String?) ?? 'target_file';
-    final normalizedSandboxTaskMode = {
-      'target_file',
-      'read_file',
-      'new_file',
-    }.contains(sandboxTaskMode)
+    final normalizedSandboxTaskMode =
+        {'target_file', 'read_file', 'new_file'}.contains(sandboxTaskMode)
         ? sandboxTaskMode
         : 'target_file';
     return AppSettings(
@@ -317,6 +319,7 @@ class AppSettings {
           : profiles.first.id,
       characterProfiles: profiles,
       userDisplayName: (json['user_display_name'] as String?) ?? '',
+      themeMode: _normalizeThemeMode(json['theme_mode'] as String?),
       defaultSandboxTaskMode: normalizedSandboxTaskMode,
       startupCharacterProfileId:
           json['startup_character_profile_id'] as String?,
@@ -344,6 +347,7 @@ class AppSettings {
     activeCharacterProfileId: 'default_assistant',
     characterProfiles: [CharacterProfile.defaultAssistant],
     userDisplayName: '',
+    themeMode: 'system',
     defaultSandboxTaskMode: 'target_file',
     startupCharacterProfileId: null,
     autoOpenModelInventoryIfUnassigned: true,
@@ -353,4 +357,8 @@ class AppSettings {
     lastMemoryFilePath: null,
     lastCharacterProfileId: null,
   );
+}
+
+String _normalizeThemeMode(String? value) {
+  return {'system', 'light', 'dark'}.contains(value) ? value! : 'system';
 }

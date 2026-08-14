@@ -706,13 +706,14 @@ class _ChatScreenState extends State<ChatScreen> {
         currentRollingSummary: _rollingSummaryLines,
         currentColdLogExcerpt: _coldLogExcerptLines,
       );
-      final response = await _inferenceController.cloudService.generateWithRetry(
-        model: bookkeeperCloudModel,
-        prompt: bookkeeperPrompt,
-        maxTokens: preset.maxTokens,
-        temperature: preset.temperature,
-        onChunk: (_) {},
-      );
+      final response = await _inferenceController.cloudService
+          .generateWithRetry(
+            model: bookkeeperCloudModel,
+            prompt: bookkeeperPrompt,
+            maxTokens: preset.maxTokens,
+            temperature: preset.temperature,
+            onChunk: (_) {},
+          );
       if (response.trim().isEmpty) {
         return;
       }
@@ -913,10 +914,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final buffer = StringBuffer()
       ..write('System:\n')
       ..write(
-        _buildChatProtocol(
-          isCloud: isCloud,
-          userDisplayName: userDisplayName,
-        ),
+        _buildChatProtocol(isCloud: isCloud, userDisplayName: userDisplayName),
       )
       ..write('\n\nCharacter overlay:\n')
       ..write(characterPrompt.trim());
@@ -2201,7 +2199,7 @@ class MessageBubble extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 290),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: messageBubbleColor(message.accent),
+            color: messageBubbleColor(theme.colorScheme, message.accent),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: theme.colorScheme.surfaceContainerHighest,
@@ -2305,11 +2303,11 @@ class ComposerBar extends StatelessWidget {
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               backgroundColor: isGenerating
-                  ? const Color(0xFFF3E4D8)
+                  ? theme.colorScheme.secondaryContainer
                   : theme.colorScheme.primary,
               foregroundColor: isGenerating
                   ? theme.colorScheme.onSurface
-                  : Colors.white,
+                  : theme.colorScheme.onPrimary,
             ),
           ),
         ),
@@ -2566,7 +2564,7 @@ class SideBump extends StatelessWidget {
                   icon,
                   size: 16,
                   color: isExpanded
-                      ? Colors.white
+                      ? theme.colorScheme.onPrimary
                       : theme.colorScheme.onSurface,
                 ),
                 const SizedBox(width: 6),
@@ -2574,7 +2572,7 @@ class SideBump extends StatelessWidget {
                   label,
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: isExpanded
-                        ? Colors.white
+                        ? theme.colorScheme.onPrimary
                         : theme.colorScheme.onSurface,
                   ),
                 ),

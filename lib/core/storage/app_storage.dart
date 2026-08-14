@@ -465,6 +465,7 @@ class AppStorageService {
             },
           ],
           'user_display_name': '',
+          'theme_mode': 'system',
           'default_sandbox_task_mode': 'target_file',
           'startup_character_profile_id': null,
           'auto_open_model_inventory_if_unassigned': true,

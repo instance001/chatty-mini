@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 
-ThemeData buildChattyMiniTheme() {
-  const baseBackground = Color(0xFFF3F0E8);
-  const surface = Color(0xFFFFFCF6);
-  const surfaceMuted = Color(0xFFE6DFD2);
-  const ink = Color(0xFF1F2321);
-  const accent = Color(0xFF2F5D50);
-  const accentSoft = Color(0xFFC7D6CF);
-  const warning = Color(0xFFB36A3C);
+ThemeData buildChattyMiniTheme(Brightness brightness) {
+  final isDark = brightness == Brightness.dark;
+  final baseBackground = isDark
+      ? const Color(0xFF111615)
+      : const Color(0xFFF3F0E8);
+  final surface = isDark ? const Color(0xFF18211F) : const Color(0xFFFFFCF6);
+  final surfaceMuted = isDark
+      ? const Color(0xFF263431)
+      : const Color(0xFFE6DFD2);
+  final ink = isDark ? const Color(0xFFEAF1ED) : const Color(0xFF1F2321);
+  final accent = isDark ? const Color(0xFF8AC4AF) : const Color(0xFF2F5D50);
+  final accentSoft = isDark ? const Color(0xFF314940) : const Color(0xFFC7D6CF);
+  final warning = isDark ? const Color(0xFFE4A06D) : const Color(0xFFB36A3C);
 
   final scheme =
       ColorScheme.fromSeed(
         seedColor: accent,
-        brightness: Brightness.light,
+        brightness: brightness,
         surface: surface,
       ).copyWith(
         primary: accent,
@@ -26,11 +31,11 @@ ThemeData buildChattyMiniTheme() {
     useMaterial3: true,
     colorScheme: scheme,
     scaffoldBackgroundColor: baseBackground,
-    textTheme: const TextTheme(
+    textTheme: TextTheme(
       headlineMedium: TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.w700,
-        letterSpacing: -0.4,
+        letterSpacing: 0,
         color: ink,
       ),
       titleMedium: TextStyle(
@@ -47,7 +52,7 @@ ThemeData buildChattyMiniTheme() {
         color: ink,
       ),
     ),
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
       surfaceTintColor: Colors.transparent,
@@ -63,7 +68,7 @@ ThemeData buildChattyMiniTheme() {
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: accentSoft, width: 1),
+        side: BorderSide(color: accentSoft, width: 1),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -72,15 +77,15 @@ ThemeData buildChattyMiniTheme() {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: accentSoft),
+        borderSide: BorderSide(color: accentSoft),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: accentSoft),
+        borderSide: BorderSide(color: accentSoft),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: accent, width: 1.4),
+        borderSide: BorderSide(color: accent, width: 1.4),
       ),
     ),
     chipTheme: ChipThemeData(
@@ -91,9 +96,9 @@ ThemeData buildChattyMiniTheme() {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(999),
-        side: const BorderSide(color: accentSoft),
+        side: BorderSide(color: accentSoft),
       ),
-      labelStyle: const TextStyle(
+      labelStyle: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w600,
         color: ink,

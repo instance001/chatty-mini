@@ -25,10 +25,10 @@ enum SidePanel { hotContext, rollingSummary }
 
 enum PanelAlignment { left, right }
 
-Color messageBubbleColor(MessageAccent accent) {
+Color messageBubbleColor(ColorScheme scheme, MessageAccent accent) {
   return switch (accent) {
-    MessageAccent.user => const Color(0xFFDDE9E2),
-    MessageAccent.assistant => const Color(0xFFFFFCF6),
-    MessageAccent.info => const Color(0xFFF3E4D8),
+    MessageAccent.user => scheme.primaryContainer.withValues(alpha: 0.68),
+    MessageAccent.assistant => scheme.surface,
+    MessageAccent.info => scheme.secondaryContainer.withValues(alpha: 0.58),
   };
 }

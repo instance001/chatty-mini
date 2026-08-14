@@ -6,6 +6,10 @@ import '../models/model_models.dart';
 class SettingsController extends ChangeNotifier {
   SettingsController({required this.storage});
 
+  static final ValueNotifier<String> themeModeNotifier = ValueNotifier<String>(
+    AppSettings.defaults.themeMode,
+  );
+
   final AppStorageService storage;
 
   bool _isLoading = false;
@@ -28,6 +32,7 @@ class SettingsController extends ChangeNotifier {
   String? get lastMemoryFilePath => _settings.lastMemoryFilePath;
   String? get lastCharacterProfileId => _settings.lastCharacterProfileId;
   String get userDisplayName => _settings.userDisplayName;
+  String get themeMode => _settings.themeMode;
   List<CharacterProfile> get characterProfiles => _settings.characterProfiles;
 
   Future<void> initialize() async {
@@ -38,6 +43,7 @@ class SettingsController extends ChangeNotifier {
     try {
       await storage.ensureInitialized();
       _settings = await storage.readSettings();
+      themeModeNotifier.value = _settings.themeMode;
       _error = null;
     } catch (error) {
       _error = error.toString();
@@ -50,6 +56,7 @@ class SettingsController extends ChangeNotifier {
   Future<void> refresh() async {
     try {
       _settings = await storage.readSettings();
+      themeModeNotifier.value = _settings.themeMode;
       _error = null;
     } catch (error) {
       _error = error.toString();
@@ -65,10 +72,14 @@ class SettingsController extends ChangeNotifier {
   Future<void> setUserDisplayName(String name) async {
     _settings = _settings.copyWith(userDisplayName: name.trim());
     await _persist(
-      name.trim().isEmpty
-          ? 'User name cleared.'
-          : 'Chatty will use that name.',
+      name.trim().isEmpty ? 'User name cleared.' : 'Chatty will use that name.',
     );
+  }
+
+  Future<void> setThemeMode(String themeMode) async {
+    _settings = _settings.copyWith(themeMode: themeMode);
+    themeModeNotifier.value = _settings.themeMode;
+    await _persist('Appearance updated.');
   }
 
   Future<void> setStartupCharacterProfileId(String? profileId) async {
@@ -145,6 +156,7 @@ class SettingsController extends ChangeNotifier {
     notifyListeners();
     try {
       await storage.writeSettings(_settings);
+      themeModeNotifier.value = _settings.themeMode;
       if (!silentStatus) {
         _statusMessage = statusMessage;
       }
