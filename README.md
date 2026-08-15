@@ -20,7 +20,7 @@ The operating stance is local first, cloud optional: local when you want device-
 - Google Play: <https://play.google.com/store/apps/details?id=io.instance001.chatmini>
 - Direct APK: <https://github.com/instance001/chatty-mini/releases/download/v1.0.0-b3/chatty-mini-v1.0.0-b3.apk>
 - Latest releases: <https://github.com/instance001/chatty-mini/releases>
-- Obtainium: add this GitHub repository and track releases.
+- Obtainium guide: <https://instance001.github.io/obtainium.html>
 
 The direct APK is provided for users who prefer GitHub release installs or Obtainium updates. Google Play remains the easiest install path for most Android users.
 
