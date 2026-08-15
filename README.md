@@ -15,6 +15,15 @@ It is intentionally narrow in scope:
 
 The operating stance is local first, cloud optional: local when you want device-side control, cloud when you deliberately choose a provider.
 
+## Install
+
+- Google Play: <https://play.google.com/store/apps/details?id=io.instance001.chatmini>
+- Direct APK: <https://github.com/instance001/chatty-mini/releases/download/v1.0.0-b3/chatty-mini-v1.0.0-b3.apk>
+- Latest releases: <https://github.com/instance001/chatty-mini/releases>
+- Obtainium: add this GitHub repository and track releases.
+
+The direct APK is provided for users who prefer GitHub release installs or Obtainium updates. Google Play remains the easiest install path for most Android users.
+
 ## Screenshots
 
 ![Chatty-mini main chat](<./assets/branding/01-main-chat-cloud-original-trim.png>)
@@ -106,6 +115,7 @@ That means:
 Local GGUF use does not send prompts or files to FMI. When a user explicitly selects a configured cloud model, Chatty-mini sends the prompt and relevant app context directly to that provider or custom endpoint. Cloud API keys are encrypted locally using Android Keystore. No cloud lane is selected implicitly.
 
 - [Google Play](https://play.google.com/store/apps/details?id=io.instance001.chatmini)
+- [Direct APK release](https://github.com/instance001/chatty-mini/releases/tag/v1.0.0-b3)
 - [Chatty-mini Privacy Policy](https://instance001.github.io/privacy/chatty-mini.html)
 - [FMI Google Play releases](https://instance001.github.io/google-play.html)
 
