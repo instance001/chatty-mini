@@ -105,7 +105,7 @@ class _CharacterTrayState extends State<CharacterTray> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Save named personas and switch between them for different tasks. The active profile is persisted across sessions.',
+                        'Save named character prompt profiles and switch between them for different tasks. The active profile is persisted across sessions.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurface.withValues(
                             alpha: 0.68,
@@ -459,7 +459,7 @@ class _CharacterProfileEditorSheetState
                   decoration: const InputDecoration(
                     labelText: 'System prompt',
                     hintText:
-                        'Describe how this persona should behave, speak, and prioritize.',
+                        'Describe how this character prompt should shape tone, style, and priorities.',
                   ),
                 ),
               ),
@@ -501,7 +501,7 @@ Future<void> _showImportPicker(
               Text('Import Profiles', style: theme.textTheme.titleMedium),
               const SizedBox(height: 6),
               Text(
-                'Pick a sandbox JSON export to merge into the current persona list.',
+                'Pick a sandbox JSON export to merge into the current character prompt list.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
                 ),

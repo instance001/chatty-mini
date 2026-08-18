@@ -11,7 +11,7 @@ It is intentionally narrow in scope:
 - bundled native runtime
 - sandbox files for lightweight local notes and JSON state
 - saved character prompt profiles
-- hot context and rolling summary side rails
+- active context and rolling summary side rails
 
 The operating stance is local first, cloud optional: local when you want device-side control, cloud when you deliberately choose a provider.
 
@@ -63,7 +63,7 @@ flowchart TB
     main --> cloud["Explicit cloud lane<br/>user-configured provider"]
 
     shell --> persona["Character prompt profiles<br/>active system prompt"]
-    shell --> memory["Hot context + rolling summary<br/>private memory side rails"]
+    shell --> memory["Active context + rolling summary<br/>private context side rails"]
     shell --> sandbox["Sandbox tray<br/>local .md / .txt / .json workspace"]
 
     persona --> prompt["Prompt assembly<br/>persona + memory + sandbox intent + user message"]
@@ -90,7 +90,7 @@ flowchart TB
 - Android Keystore-encrypted API keys and explicit provider verification
 - Mobile-oriented generation presets
 - Model health assessment for small-phone fit
-- Saved character prompt profiles with active persona switching
+- Saved character prompt profiles with active profile switching
 - Sandbox tray for `.md`, `.txt`, and `.json` files
 - User-directed sandbox export through Android's document picker
 - Deterministic sandbox task mode in the composer for targeted file work
@@ -106,7 +106,7 @@ That means:
 - users do not browse the real internal app folders directly
 - GGUF import happens through the app
 - model deletion happens through the app
-- persona exports can be written into the sandbox as JSON files
+- character prompt profile exports can be written into the sandbox as JSON files
 - sandbox files can be opened and edited inside the app
 - sandbox files can be exported to Downloads or another user-selected location
 
@@ -197,6 +197,6 @@ This repository state is a working mobile prototype focused on:
 - local-first GGUF workflow
 - reduced dashboard clutter
 - practical import / cleanup flows
-- persona and sandbox assistance
+- character prompt and sandbox assistance
 
 The Android package ID is `io.instance001.chatmini`. Privacy disclosures and store-facing links are maintained alongside the source.

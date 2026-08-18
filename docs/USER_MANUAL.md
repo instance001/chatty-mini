@@ -11,7 +11,7 @@ Chatty-mini is an Android app that lets you chat with a language model stored on
 In simple terms:
 
 - the app itself is the chat program
-- the model is the "brain" file you import
+- the model is the `.gguf` file you import
 - the runtime is the local engine that reads that model file
 - no cloud AI account is required for local chatting inside this app
 - optional cloud providers can be configured later if you choose that route
@@ -70,7 +70,7 @@ The main screen is intentionally simple.
 The top bar contains buttons for:
 
 - Sandbox tray
-- Character prompt / persona tray
+- Character prompt profile tray
 - Model inventory
 - Settings area
 - App info / memory area
@@ -82,7 +82,7 @@ This is the short line near the top showing compact state such as:
 - local mode
 - ready state
 - current preset
-- active persona
+- active character prompt profile
 
 ### Runtime Health Row
 
@@ -112,9 +112,9 @@ The Settings area includes app-level controls such as:
 
 Use `Appearance` to choose whether Chatty-mini follows the device theme, stays in light mode, or stays in dark mode.
 
-### Hot Context And Rolling Summary
+### Active Context And Rolling Summary
 
-The left `Hot Context` bump and right `Summary` bump are live memory panels.
+The left `Hot Context` bump and right `Summary` bump are live context panels.
 
 They read from private memory files:
 
@@ -182,7 +182,7 @@ If you see `High Risk`, the model may still import, but load/generation can beco
 
 ## Character Prompt Profiles
 
-Character profiles are saved personas or system prompts.
+Character profiles are saved system prompts.
 
 They let you tell the model how to behave before your message is even considered.
 
@@ -192,13 +192,13 @@ Examples:
 - story co-writer
 - blunt editor
 - research summarizer
-- bookkeeping persona
+- recap / bookkeeping profile
 
 ### What They Do
 
 The active character prompt is automatically inserted into the generation prompt before your user message.
 
-That means the active persona can change:
+That means the active character prompt can change:
 
 - tone
 - style
@@ -298,7 +298,7 @@ This does not automatically save the model's reply into the sandbox by itself.
 
 It tells the model that your next message is specifically about sandbox file content or file editing intent.
 
-## Hot Context and Summary Side Rails
+## Active Context and Summary Side Rails
 
 These are the side bumps on the chat screen.
 
@@ -434,7 +434,7 @@ The model file format used by this app.
 
 A saved bundle of generation settings such as token limit, temperature, and context.
 
-### Persona / character prompt
+### Character prompt / persona
 
 A saved system prompt describing how the model should behave.
 

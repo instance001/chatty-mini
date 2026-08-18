@@ -101,7 +101,7 @@ class HelpSheet extends StatelessWidget {
               title: 'Top Bar Controls',
               lines: const [
                 'Sandbox: local .md, .txt, and .json files.',
-                'Characters: saved persona / system prompt profiles.',
+                'Characters: saved character prompt / system prompt profiles.',
                 'Model Inventory: import GGUF files and assign Main AI / Bookkeeper.',
                 'Info: this help sheet and app guidance.',
               ],
