@@ -53,7 +53,12 @@ class ModelController extends ChangeNotifier {
     try {
       await storage.ensureInitialized();
       _settings = await storage.readSettings();
+      final bundledSmol = await storage.ensureBundledSmol();
       _models = await storage.scanModels();
+      if (_settings.mainModelId == null && bundledSmol != null) {
+        _settings = _settings.copyWith(mainModelId: bundledSmol.id);
+        _statusMessage = 'Your local model is ready as Main AI.';
+      }
       _settings = _reconcileSelections(_settings, _models);
       _reconcileSelectionState();
       await storage.writeSettings(_settings);
@@ -75,6 +80,52 @@ class ModelController extends ChangeNotifier {
       _reconcileSelectionState();
       await storage.writeSettings(_settings);
       _error = null;
+    } catch (error) {
+      _error = error.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> clearAllPrivateData() async {
+    _isLoading = true;
+    _error = null;
+    _statusMessage = null;
+    notifyListeners();
+    try {
+      await cloudKeyService.deleteAll(
+        _settings.cloudModels.map((model) => model.provider),
+      );
+      await storage.clearAllPrivateData();
+      await storage.keepBundledSmolRemoved();
+      _settings = AppSettings.defaults;
+      _models = const [];
+      _selectedModelIds.clear();
+      _statusMessage =
+          'Private model, sandbox, memory, log, and cloud setup data was cleared.';
+    } catch (error) {
+      _error = error.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> restoreBundledSmol() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await storage.restoreBundledSmol();
+      final restored = await storage.ensureBundledSmol();
+      _models = await storage.scanModels();
+      if (_settings.mainModelId == null && restored != null) {
+        _settings = _settings.copyWith(mainModelId: restored.id);
+      }
+      _settings = _reconcileSelections(_settings, _models);
+      await storage.writeSettings(_settings);
+      _statusMessage = 'Local model inventory refreshed.';
     } catch (error) {
       _error = error.toString();
     } finally {

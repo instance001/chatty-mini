@@ -48,3 +48,10 @@ app.*.map.json
 /android/key.properties
 /android/*.jks
 /android/*.keystore
+
+# Never commit model weights. Users import their own GGUF locally.
+/assets/models/*.gguf
+*.safetensors
+*.onnx
+*.pt
+*.pth

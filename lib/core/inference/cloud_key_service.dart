@@ -17,4 +17,10 @@ class CloudKeyService {
   Future<bool> has(String providerId) async =>
       await _channel.invokeMethod<bool>('has', {'providerId': providerId}) ??
       false;
+
+  Future<void> deleteAll(Iterable<String> providerIds) async {
+    for (final providerId in providerIds) {
+      await delete(providerId);
+    }
+  }
 }

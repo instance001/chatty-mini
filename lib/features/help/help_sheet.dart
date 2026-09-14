@@ -98,6 +98,16 @@ class HelpSheet extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             _HelpSection(
+              title: 'GGUF model guide',
+              lines: const [
+                'Chatty-mini does not ship model weights: import a GGUF you trust into private app storage.',
+                'A bigger GGUF may give smarter or more capable answers, but it needs more memory and can be slower.',
+                'For most phones, stick to models below 1B parameters. Search for “Qwen2.5-0.5B-Instruct GGUF” as a compact option.',
+                '“Qwen2.5-1.5B-Instruct GGUF” is an example of a larger option for a powerful phone.',
+              ],
+            ),
+            const SizedBox(height: 12),
+            _HelpSection(
               title: 'Top Bar Controls',
               lines: const [
                 'Sandbox: local .md, .txt, and .json files.',

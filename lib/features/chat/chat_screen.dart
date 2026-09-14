@@ -24,6 +24,7 @@ import '../sandbox/sandbox_tray.dart';
 import '../settings/settings_sheet.dart';
 import '../settings/settings_controller.dart';
 import 'chat_models.dart';
+import 'report_message_sheet.dart';
 
 enum SandboxTaskMode { targetFile, readFile, newFile }
 
@@ -95,6 +96,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   SidePanel? _expandedPanel;
   bool _storageReady = false;
+  bool _preparingLocalModel = false;
   bool _sandboxTaskEnabled = false;
   SandboxTaskMode _sandboxTaskMode = SandboxTaskMode.targetFile;
   String? _sandboxTargetPath;
@@ -180,6 +182,9 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _initializeStorage() async {
     final snapshot = await _storage.ensureInitialized();
     await _sandboxController.initialize();
+    if (mounted) {
+      setState(() => _preparingLocalModel = true);
+    }
     await _modelController.initialize();
     await _memoryController.initialize();
     await _characterController.initialize();
@@ -195,6 +200,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _syncSandboxTargetWithFiles();
     setState(() {
       _storageReady = true;
+      _preparingLocalModel = false;
       _sandboxTaskMode = _sandboxTaskModeFromSetting(
         _settingsController.defaultSandboxTaskMode,
       );
@@ -296,6 +302,7 @@ class _ChatScreenState extends State<ChatScreen> {
         role: 'Assistant',
         body: completed,
         accent: MessageAccent.assistant,
+        reportContext: _reportContext(),
       ),
     );
 
@@ -326,6 +333,62 @@ class _ChatScreenState extends State<ChatScreen> {
         assistantResponse: completed,
       ),
     );
+  }
+
+  AiReportContext _reportContext() {
+    final cloud = _modelController.findCloudBySelectionId(
+      _modelController.settings.mainModelId,
+    );
+    if (cloud != null) {
+      return AiReportContext(
+        lane: 'cloud',
+        providerLabel: cloud.label,
+        modelLabel: cloud.model.isEmpty ? cloud.label : cloud.model,
+      );
+    }
+    final local = _modelController.findById(
+      _modelController.settings.mainModelId,
+    );
+    return AiReportContext(
+      lane: 'local',
+      providerLabel: 'On-device GGUF',
+      modelLabel: local?.fileName ?? 'Unknown local model',
+    );
+  }
+
+  Future<void> _reportAssistantMessage(ChatMessage message) async {
+    final reportContext = message.reportContext;
+    if (reportContext == null) return;
+    final messageIndex = _messages.indexOf(message);
+    final precedingPrompt = messageIndex <= 0
+        ? null
+        : _messages
+              .sublist(0, messageIndex)
+              .lastWhere(
+                (entry) => entry.accent == MessageAccent.user,
+                orElse: () => const ChatMessage(
+                  role: 'You',
+                  body: '',
+                  accent: MessageAccent.user,
+                ),
+              )
+              .body;
+    final sent = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => ReportMessageSheet(
+        assistantResponse: message.body,
+        precedingUserPrompt: precedingPrompt?.isEmpty ?? true
+            ? null
+            : precedingPrompt,
+        context: reportContext,
+      ),
+    );
+    if (sent == true && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Report sent. Thank you.')));
+    }
   }
 
   void _togglePanel(SidePanel panel) {
@@ -898,6 +961,7 @@ class _ChatScreenState extends State<ChatScreen> {
       context: context,
       memoryController: _memoryController,
       settingsController: _settingsController,
+      modelController: _modelController,
       onOpenColdLog: _openMemoryTray,
       onOpenModels: _openModelSheet,
       onOpenHelp: _openHelpSheet,
@@ -1330,6 +1394,8 @@ Sandbox task contract:
                                 messages: _messages,
                                 assistantDraft:
                                     _inferenceController.status.assistantDraft,
+                                onReportAssistantMessage:
+                                    _reportAssistantMessage,
                               ),
                             );
                           },
@@ -1465,6 +1531,38 @@ Sandbox task contract:
                                 )
                                 .toList(),
                           ),
+                  ),
+                ),
+              ),
+            if (_preparingLocalModel)
+              Positioned.fill(
+                child: ColoredBox(
+                  color: theme.colorScheme.surface.withValues(alpha: 0.94),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(28),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.memory_outlined,
+                            size: 40,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(height: 18),
+                          Text(
+                            'Preparing local chat…',
+                            style: theme.textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Preparing your local model for private on-device use. This can take a moment.',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -2106,11 +2204,13 @@ class ChatCard extends StatefulWidget {
     required this.scrollController,
     required this.messages,
     required this.assistantDraft,
+    required this.onReportAssistantMessage,
   });
 
   final ScrollController scrollController;
   final List<ChatMessage> messages;
   final String assistantDraft;
+  final Future<void> Function(ChatMessage message) onReportAssistantMessage;
 
   @override
   State<ChatCard> createState() => _ChatCardState();
@@ -2175,7 +2275,12 @@ class _ChatCardState extends State<ChatCard> {
           separatorBuilder: (_, _) => const SizedBox(height: 10),
           itemBuilder: (context, index) {
             final message = visibleMessages[index];
-            return MessageBubble(message: message);
+            return MessageBubble(
+              message: message,
+              onReport: message.reportContext == null
+                  ? null
+                  : () => widget.onReportAssistantMessage(message),
+            );
           },
         ),
       ),
@@ -2184,9 +2289,10 @@ class _ChatCardState extends State<ChatCard> {
 }
 
 class MessageBubble extends StatelessWidget {
-  const MessageBubble({super.key, required this.message});
+  const MessageBubble({super.key, required this.message, this.onReport});
 
   final ChatMessage message;
+  final Future<void> Function()? onReport;
 
   @override
   Widget build(BuildContext context) {
@@ -2218,6 +2324,17 @@ class MessageBubble extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(message.body, style: theme.textTheme.bodyLarge),
+                if (onReport != null) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: onReport,
+                      icon: const Icon(Icons.flag_outlined, size: 18),
+                      label: const Text('Report message'),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

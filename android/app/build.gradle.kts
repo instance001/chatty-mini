@@ -8,7 +8,14 @@ plugins {
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
-val activeKeystorePropertiesFile = keystorePropertiesFile.takeIf { it.exists() }
+val fallbackKeystorePropertiesFile = rootProject.file(
+    "../../fmi-branding-kit/android-keystore/key.properties",
+)
+val activeKeystorePropertiesFile = when {
+    keystorePropertiesFile.exists() -> keystorePropertiesFile
+    fallbackKeystorePropertiesFile.exists() -> fallbackKeystorePropertiesFile
+    else -> null
+}
 if (activeKeystorePropertiesFile != null) {
     keystoreProperties.load(activeKeystorePropertiesFile.inputStream())
 }

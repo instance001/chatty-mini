@@ -5,11 +5,25 @@ class ChatMessage {
     required this.role,
     required this.body,
     required this.accent,
+    this.reportContext,
   });
 
   final String role;
   final String body;
   final MessageAccent accent;
+  final AiReportContext? reportContext;
+}
+
+class AiReportContext {
+  const AiReportContext({
+    required this.lane,
+    required this.providerLabel,
+    required this.modelLabel,
+  });
+
+  final String lane;
+  final String providerLabel;
+  final String modelLabel;
 }
 
 enum MessageAccent { info, user, assistant }

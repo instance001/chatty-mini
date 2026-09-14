@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../memory/memory_controller.dart';
+import '../models/model_controller.dart';
 import 'settings_controller.dart';
 
 const _retentionOptions = [10, 25, 50, 100];
@@ -19,6 +20,7 @@ Future<void> showSettingsSheet({
   required BuildContext context,
   required MemoryController memoryController,
   required SettingsController settingsController,
+  required ModelController modelController,
   required VoidCallback onOpenColdLog,
   required VoidCallback onOpenModels,
   required VoidCallback onOpenHelp,
@@ -31,6 +33,7 @@ Future<void> showSettingsSheet({
     builder: (_) => SettingsSheet(
       memoryController: memoryController,
       settingsController: settingsController,
+      modelController: modelController,
       onOpenColdLog: onOpenColdLog,
       onOpenModels: onOpenModels,
       onOpenHelp: onOpenHelp,
@@ -43,6 +46,7 @@ class SettingsSheet extends StatelessWidget {
     super.key,
     required this.memoryController,
     required this.settingsController,
+    required this.modelController,
     required this.onOpenColdLog,
     required this.onOpenModels,
     required this.onOpenHelp,
@@ -50,6 +54,7 @@ class SettingsSheet extends StatelessWidget {
 
   final MemoryController memoryController;
   final SettingsController settingsController;
+  final ModelController modelController;
   final VoidCallback onOpenColdLog;
   final VoidCallback onOpenModels;
   final VoidCallback onOpenHelp;
@@ -179,6 +184,61 @@ class SettingsSheet extends StatelessWidget {
                             label: const Text('Clear session logs'),
                           ),
                         ],
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Storage & data',
+                          style: theme.textTheme.labelLarge,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${modelController.models.length} local model(s) use ${_formatBytes(modelController.totalModelBytes)}. Model Inventory handles individual removal; this action clears every private Chatty-mini file and cloud setup.',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          icon: const Icon(Icons.delete_forever_outlined),
+                          label: const Text('Clear all private app data'),
+                          onPressed: modelController.isLoading
+                              ? null
+                              : () async {
+                                  final approved = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text(
+                                        'Clear all private app data?',
+                                      ),
+                                      content: const Text(
+                                        'This permanently deletes imported GGUFs, sandbox files, memory, logs, settings, cloud configuration, and stored cloud keys.',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        FilledButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child: const Text('Clear all data'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (approved == true) {
+                                    await modelController.clearAllPrivateData();
+                                  }
+                                },
+                        ),
                       ],
                     ),
                   ),

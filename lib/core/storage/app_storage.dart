@@ -26,6 +26,7 @@ class AppStorageSnapshot {
 }
 
 class AppStorageService {
+  static const bundledSmolFileName = 'SmolLM2-360M-Instruct-Q4_K_M.gguf';
   AppStorageSnapshot? _snapshot;
 
   Future<AppStorageSnapshot> ensureInitialized() async {
@@ -68,6 +69,23 @@ class AppStorageService {
     );
     return _snapshot!;
   }
+
+  /// Deletes only Chatty-mini's private application-support subtree. Android
+  /// also removes this app-specific storage automatically on uninstall.
+  Future<void> clearAllPrivateData() async {
+    final appSupportDir = await getApplicationSupportDirectory();
+    final rootDir = Directory('${appSupportDir.path}/chatty_mini');
+    if (await rootDir.exists()) await rootDir.delete(recursive: true);
+    _snapshot = null;
+  }
+
+  /// Public source builds deliberately contain no model weights. Models are
+  /// imported by the user into private app storage.
+  Future<ModelRecord?> ensureBundledSmol() async => null;
+
+  Future<void> restoreBundledSmol() async {}
+
+  Future<void> keepBundledSmolRemoved() async {}
 
   Future<List<SandboxFileEntry>> listSandboxFiles() async {
     final snapshot = await ensureInitialized();
@@ -351,6 +369,9 @@ class AppStorageService {
       final file = File('${snapshot.modelsDir.path}/$cleanId');
       if (await file.exists()) {
         await file.delete();
+      }
+      if (cleanId == bundledSmolFileName) {
+        await keepBundledSmolRemoved();
       }
     }
   }
